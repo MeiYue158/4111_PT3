@@ -1,0 +1,87 @@
+<h2>User Registration</h2>
+<form action="/create_user" method="post">
+  <label for="country">Country:</label>
+  <select id="country" name="country" onchange="updateCityOptions()" required>
+    <option value="">-- Select Country --</option>
+    <option value="USA" {% if country == 'USA' %}selected{% endif %}>USA</option>
+    <option value="China" {% if country == 'China' %}selected{% endif %}>China</option>
+  </select><br>
+  
+  <label for="city_name">City:</label>
+  <select id="city_name" name="city_name" required>
+    <!-- City options are automatically updated via JS -->
+  </select><br>
+  
+  Email: <input type="email" name="email" value="{{ email or '' }}" required><br>
+  First Name: <input type="text" name="first_name" value="{{ first_name or '' }}" required><br>
+  Last Name: <input type="text" name="last_name" value="{{ last_name or '' }}" required><br>
+  Date of Birth: <input type="date" id="dob" name="date_of_birth" value="{{ date_of_birth or '' }}" required><br>
+  
+
+  Gender:
+  <select name="gender" required>
+    <option value="male" {% if gender == 'male' %}selected{% endif %}>male</option>
+    <option value="female" {% if gender == 'female' %}selected{% endif %}>female</option>
+    <option value="non-binary" {% if gender == 'non-binary' %}selected{% endif %}>non-binary</option>
+    <option value="other" {% if gender == 'other' %}selected{% endif %}>other</option>
+    <option value="prefer not to say" {% if gender == 'prefer not to say' %}selected{% endif %}>prefer not to say</option>
+  </select><br>
+
+
+  Preferred Travel Type: <input type="text" name="preferred_travel_type" value="{{ preferred_travel_type or '' }}"><br>
+  Occupation:
+  <select name="occupation" required>
+    <option value="student" {% if occupation == 'student' %}selected{% endif %}>student</option>
+    <option value="teacher" {% if occupation == 'teacher' %}selected{% endif %}>teacher</option>
+    <option value="engineer" {% if occupation == 'engineer' %}selected{% endif %}>engineer</option>
+    <option value="artist" {% if occupation == 'artist' %}selected{% endif %}>artist</option>
+    <option value="unemployed" {% if occupation == 'unemployed' %}selected{% endif %}>unemployed</option>
+    <option value="retired" {% if occupation == 'retired' %}selected{% endif %}>retired</option>
+    <option value="other" {% if occupation == 'other' %}selected{% endif %}>other</option>
+  </select><br>
+
+  
+
+  Income:
+  <select name="income" required>
+    <option value="up to $50K">up to $50K</option>
+    <option value="$50–100K">$50–100K</option>   <!-- ⚠ en dash -->
+    <option value="$100-200K">$100–200K</option> <!-- ⚠ en dash -->
+    <option value="more than $200K">more than $200K</option>
+    <option value="prefer not to say">prefer not to say</option>
+  </select><br>
+  
+
+  <input type="submit" value="Register">
+</form>
+
+<script>
+  const cityOptions = {
+    USA: ["New York", "Los Angeles", "Chicago", "San Francisco", "Seattle"],
+    China: ["Beijing", "Shanghai", "Guangzhou", "Shenzhen", "Chengdu"]
+  };
+
+  function updateCityOptions() {
+    const country = document.getElementById("country").value;
+    const citySelect = document.getElementById("city_name");
+    citySelect.innerHTML = "";
+
+    if (cityOptions[country]) {
+      cityOptions[country].forEach(city => {
+        const opt = document.createElement("option");
+        opt.value = city;
+        opt.innerText = city;
+        citySelect.appendChild(opt);
+      });
+    }
+  }
+
+  // Automatically updated when the page loads (to retain the data last filled in)
+  window.onload = updateCityOptions;
+
+  // Set the maximum birthday to today
+  const today = new Date().toISOString().split('T')[0];
+  document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('dob').setAttribute('max', today);
+  });
+</script>

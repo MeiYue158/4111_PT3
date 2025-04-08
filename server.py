@@ -9,214 +9,269 @@ A debugger such as "pdb" may be helpful for debugging.
 Read about it online.
 """
 import os
-  # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response
+from flask import Flask, request, render_template, g, redirect, Response, session
+import re
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
+app.secret_key = 'aSDF2134!@#supersecretkey'
 
-
-#
-# The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
-#
-# XXX: The URI should be in the format of: 
-#
-#     postgresql://USER:PASSWORD@34.148.223.31/proj1part2
-#
-# For example, if you had username zy2431 and password 123123, then the following line would be:
-#
-#     DATABASEURI = "postgresql://zy2431:123123@34.148.223.31/proj1part2"
-#
-# Modify these with your own credentials you received from TA!
 DATABASE_USERNAME = ""
 DATABASE_PASSWRD = ""
 DATABASE_HOST = "34.148.223.31"
 DATABASEURI = "postgresql://my2903:770042@34.148.223.31/proj1part2"
 
-
-#
-# This line creates a database engine that knows how to connect to the URI above.
-#
 engine = create_engine(DATABASEURI)
-
-#
-# Example of running queries in your database
-# Note that this will probably not work if you already have a table named 'test' in your database, containing meaningful data. This is only an example showing you how to run queries in your database using SQLAlchemy.
-#
-with engine.connect() as conn:
-	create_table_command = """
-	CREATE TABLE IF NOT EXISTS test (
-		id serial,
-		name text
-	)
-	"""
-	res = conn.execute(text(create_table_command))
-	insert_table_command = """INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace')"""
-	res = conn.execute(text(insert_table_command))
-	# you need to commit for create, insert, update queries to reflect
-	conn.commit()
-
 
 @app.before_request
 def before_request():
-	"""
-	This function is run at the beginning of every web request 
-	(every time you enter an address in the web browser).
-	We use it to setup a database connection that can be used throughout the request.
-
-	The variable g is globally accessible.
-	"""
-	try:
-		g.conn = engine.connect()
-	except:
-		print("uh oh, problem connecting to database")
-		import traceback; traceback.print_exc()
-		g.conn = None
+    try:
+        g.conn = engine.connect()
+    except:
+        print("uh oh, problem connecting to database")
+        import traceback; traceback.print_exc()
+        g.conn = None
 
 @app.teardown_request
 def teardown_request(exception):
-	"""
-	At the end of the web request, this makes sure to close the database connection.
-	If you don't, the database could run out of memory!
-	"""
-	try:
-		g.conn.close()
-	except Exception as e:
-		pass
+    try:
+        g.conn.close()
+    except Exception as e:
+        pass
 
-
-#
-# @app.route is a decorator around index() that means:
-#   run index() whenever the user tries to access the "/" path using a GET request
-#
-# If you wanted the user to go to, for example, localhost:8111/foobar/ with POST or GET then you could use:
-#
-#       @app.route("/foobar/", methods=["POST", "GET"])
-#
-# PROTIP: (the trailing / in the path is important)
-# 
-# see for routing: https://flask.palletsprojects.com/en/1.1.x/quickstart/#routing
-# see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
-#
 @app.route('/')
 def index():
-	"""
-	request is a special object that Flask provides to access web request information:
+    print(request.args)
+    select_query = "SELECT name from test"
+    cursor = g.conn.execute(text(select_query))
+    names = [result[0] for result in cursor]
+    cursor.close()
+    context = dict(data=names)
+    return render_template("index.html", **context)
 
-	request.method:   "GET" or "POST"
-	request.form:     if the browser submitted a form, this contains the data in the form
-	request.args:     dictionary of URL arguments, e.g., {a:1, b:2} for http://localhost?a=1&b=2
-
-	See its API: https://flask.palletsprojects.com/en/1.1.x/api/#incoming-request-data
-	"""
-
-	# DEBUG: this is debugging code to see what request looks like
-	print(request.args)
-
-
-	#
-	# example of a database query
-	#
-	select_query = "SELECT name from test"
-	cursor = g.conn.execute(text(select_query))
-	names = []
-	for result in cursor:
-		names.append(result[0])
-	cursor.close()
-
-	#
-	# Flask uses Jinja templates, which is an extension to HTML where you can
-	# pass data to a template and dynamically generate HTML based on the data
-	# (you can think of it as simple PHP)
-	# documentation: https://realpython.com/primer-on-jinja-templating/
-	#
-	# You can see an example template in templates/index.html
-	#
-	# context are the variables that are passed to the template.
-	# for example, "data" key in the context variable defined below will be 
-	# accessible as a variable in index.html:
-	#
-	#     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
-	#     <div>{{data}}</div>
-	#     
-	#     # creates a <div> tag for each element in data
-	#     # will print: 
-	#     #
-	#     #   <div>grace hopper</div>
-	#     #   <div>alan turing</div>
-	#     #   <div>ada lovelace</div>
-	#     #
-	#     {% for n in data %}
-	#     <div>{{n}}</div>
-	#     {% endfor %}
-	#
-	context = dict(data = names)
-
-
-	#
-	# render_template looks in the templates/ folder for files.
-	# for example, the below file reads template/index.html
-	#
-	return render_template("index.html", **context)
-
-#
-# This is an example of a different path.  You can see it at:
-# 
-#     localhost:8111/another
-#
-# Notice that the function name is another() rather than index()
-# The functions for each app.route need to have different names
-#
 @app.route('/another')
 def another():
-	return render_template("another.html")
+    return render_template("another.html")
 
-
-# Example of adding new data to the database
 @app.route('/add', methods=['POST'])
 def add():
-	# accessing form inputs from user
-	name = request.form['name']
-	
-	# passing params in for each variable into query
-	params = {}
-	params["new_name"] = name
-	g.conn.execute(text('INSERT INTO test(name) VALUES (:new_name)'), params)
-	g.conn.commit()
-	return redirect('/')
-
+    name = request.form['name']
+    params = {"new_name": name}
+    g.conn.execute(text('INSERT INTO test(name) VALUES (:new_name)'), params)
+    g.conn.commit()
+    return redirect('/')
 
 @app.route('/login')
 def login():
-	abort(401)
-	this_is_never_executed()
+    abort(401)
 
+@app.route('/create_user', methods=['GET', 'POST'])
+def create_user():
+    if request.method == 'GET':
+        form_data = session.get('form_data', {})  
+        return render_template('create_user.html', **form_data)
+    elif request.method == 'POST':
+        country = request.form['country']
+        city_name = request.form['city_name']
+        email = request.form['email']
+
+        email_regex = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+        if not re.match(email_regex, email):
+            return "Invalid email format. Please go back and enter a valid email.", 400
+
+        existing_user = g.conn.execute(text("""
+            SELECT 1 FROM Users WHERE email = :email
+        """), {'email': email}).fetchone()
+        if existing_user:
+            return "This email is already registered. Please use another one.", 400
+
+        result = g.conn.execute(text("""
+            SELECT city_id FROM City
+            WHERE country ILIKE :country AND city_name ILIKE :city_name
+        """), {'country': country, 'city_name': city_name})
+        city_row = result.fetchone()
+        if city_row is None:
+            return "City not found", 400
+        city_id = city_row[0]
+
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        dob = request.form['date_of_birth']
+        gender = request.form['gender']
+        preferred_travel_type = request.form.get('preferred_travel_type', '')
+        occupation = request.form.get('occupation', '')
+        income = request.form.get('income', '')
+
+        session['form_data'] = {
+            'country': country,
+            'city_name': city_name,
+            'email': email,
+            'first_name': first_name,
+            'last_name': last_name,
+            'date_of_birth': dob,
+            'gender': gender,
+            'preferred_travel_type': preferred_travel_type,
+            'occupation': occupation,
+            'income': income
+        }
+
+        params = {
+            "city_id": city_id,
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "date_of_birth": dob,
+            "gender": gender,
+            "preferred_travel_type": preferred_travel_type,
+            "occupation": occupation,
+            "income": income
+        }
+
+        try:
+            result = g.conn.execute(text("""
+                INSERT INTO Users (city_id, email, first_name, last_name, date_of_birth, gender, preferred_travel_type, occupation, income)
+                VALUES (:city_id, :email, :first_name, :last_name, :date_of_birth, :gender, :preferred_travel_type, :occupation, :income)
+                RETURNING user_id
+            """), params)
+            user_id = result.fetchone()[0]
+            session['user_id'] = user_id
+            g.conn.commit()
+            return redirect('/create_trip')
+        except Exception as e:
+            g.conn.rollback()
+            return f"Error: {str(e)}", 400
+
+    return render_template('create_user.html')
+
+@app.route('/create_trip', methods=['GET', 'POST'])
+def create_trip():
+    if request.method == 'POST':
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect('/create_user')
+
+        result = g.conn.execute(text("""
+            SELECT city_id FROM Users WHERE user_id = :user_id
+        """), {'user_id': user_id})
+        row = result.fetchone()
+        if row is None:
+            return "User city not found.", 400
+        origin = row[0]
+
+        begin_date = request.form['begin_date']
+        end_date = request.form['end_date']
+        num_adults = request.form['num_adults']
+        num_children = request.form['num_children']
+        
+        session['trip_form_data'] = {
+            'begin_date': begin_date,
+            'end_date': end_date,
+            'num_adults': num_adults,
+            'num_children': num_children
+        }
+
+
+        params = {
+            'begin_date': begin_date,
+            'end_date': end_date,
+            'origin': origin,
+            'num_adults': num_adults,
+            'num_children': num_children
+        }
+
+        result = g.conn.execute(text("""
+            INSERT INTO Trip (begin_date, end_date, origin, num_adults, num_children)
+            VALUES (:begin_date, :end_date, :origin, :num_adults, :num_children)
+            RETURNING trip_id
+        """), params)
+        trip_id = result.fetchone()[0]
+
+        g.conn.execute(text("""
+            INSERT INTO User_Trip (user_id, trip_id)
+            VALUES (:user_id, :trip_id)
+        """), {'user_id': user_id, 'trip_id': trip_id})
+
+        session['trip_id'] = trip_id
+        g.conn.commit()
+        return redirect('/trip_details')
+
+    form_data = session.get('trip_form_data', {})
+    return render_template('create_trip.html', **form_data)
+
+
+@app.route('/trip_details', methods=['GET', 'POST'])
+def trip_details():
+    trip_id = session.get('trip_id')
+    if not trip_id:
+        return redirect('/create_trip')
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        # Get Experience fields
+        exp_names = request.form.getlist('experience_name')
+        exp_cats = request.form.getlist('experience_category')
+        exp_park_ids = request.form.getlist('experience_park_id')
+        exp_times = request.form.getlist('purchase_time')
+        pay_methods = request.form.getlist('payment_method')
+        exp_costs = request.form.getlist('experience_cost')  # <- ✅ ADD HERE
+
+        for name, cat, park_id, time, method, cost in zip(exp_names, exp_cats, exp_park_ids, exp_times, pay_methods, exp_costs):
+            result = g.conn.execute(text("""
+                INSERT INTO Experience (name, category, park_id)
+                VALUES (:name, :cat, :park_id)
+                ON CONFLICT (name, park_id) DO NOTHING
+                RETURNING experience_id
+            """), {'name': name, 'cat': cat, 'park_id': park_id})
+
+            experience_id = result.fetchone()
+            if not experience_id:
+                experience_id = g.conn.execute(text("""
+                    SELECT experience_id FROM Experience
+                    WHERE name = :name AND park_id = :park_id
+                """), {'name': name, 'park_id': park_id}).fetchone()
+
+            experience_id = experience_id[0]
+
+            g.conn.execute(text("""
+                INSERT INTO Has_Experience (trip_id, experience_id, park_id, purchase_time, payment_method, cost)
+                VALUES (:trip_id, :experience_id, :park_id, :time, :method, :cost)
+                ON CONFLICT DO NOTHING
+            """), {
+                'trip_id': trip_id,
+                'experience_id': experience_id,
+                'park_id': park_id,
+                'time': time,
+                'method': method,
+                'cost': cost
+            })
+
+        g.conn.commit()
+
+        if action == 'save':
+            return "Saved! You can come back later."
+        elif action == 'submit':
+            session.pop('user_id', None)
+            session.pop('trip_id', None)
+            return render_template('submission_success.html')
+
+    return render_template('trip_details.html')
 
 if __name__ == "__main__":
-	import click
+    import click
 
-	@click.command()
-	@click.option('--debug', is_flag=True)
-	@click.option('--threaded', is_flag=True)
-	@click.argument('HOST', default='0.0.0.0')
-	@click.argument('PORT', default=8111, type=int)
-	def run(debug, threaded, host, port):
-		"""
-		This function handles command line parameters.
-		Run the server using:
+    @click.command()
+    @click.option('--debug', is_flag=True)
+    @click.option('--threaded', is_flag=True)
+    @click.argument('HOST', default='0.0.0.0')
+    @click.argument('PORT', default=8111, type=int)
+    def run(debug, threaded, host, port):
+        HOST, PORT = host, port
+        print("running on %s:%d" % (HOST, PORT))
+        app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
 
-			python server.py
+    run()
 
-		Show the help text using:
 
-			python server.py --help
-
-		"""
-
-		HOST, PORT = host, port
-		print("running on %s:%d" % (HOST, PORT))
-		app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
-
-run()

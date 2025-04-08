@@ -1,0 +1,32 @@
+<h1 style="color: #0056b3;">🗓️ Plan Your Trip</h1>
+<form method="POST" action="/create_trip" onsubmit="return validateTripForm();">
+  Begin Date: <input type="date" id="begin_date" name="begin_date" value="{{ begin_date or '' }}" required><br>
+  End Date: <input type="date" id="end_date" name="end_date" value="{{ end_date or '' }}" required><br>
+  Number of Adults: <input type="number" name="num_adults" min="0" value="{{ num_adults or '' }}" required><br>
+  Number of Children: <input type="number" name="num_children" min="0" value="{{ num_children or '' }}" required><br>
+
+  <button type="submit">Continue to Trip Details</button>
+</form>
+
+<script>
+  function validateTripForm() {
+    const beginDate = document.querySelector('input[name="begin_date"]').value;
+    const endDate = document.querySelector('input[name="end_date"]').value;
+    const adults = document.querySelector('input[name="num_adults"]').value;
+
+    if (!beginDate || !endDate || !adults || adults <= 0) {
+      alert("Please fill out all required fields (begin date, end date, number of adults).");
+      return false;
+    }
+
+    // endDate cannot be earlier than beginDate
+    if (endDate < beginDate) {
+      alert("End date cannot be earlier than begin date!");
+      return false;
+    }
+
+    return true;
+  }
+</script>
+
+  

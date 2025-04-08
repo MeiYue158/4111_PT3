@@ -1,0 +1,20 @@
+<h2>Add a Party Member</h2>
+<form method="POST">
+  Nickname: <input type="text" name="nickname"><br>
+  Age at Travel: <input type="number" name="age_at_travel" required><br>
+
+  Gender:
+  <select name="gender" required>
+    <option value="male">male</option>
+    <option value="female">female</option>
+    <option value="non-binary">non-binary</option>
+    <option value="other">other</option>
+    <option value="prefer not to say">prefer not to say</option>
+  </select><br>
+
+  Relationship to User: <input type="text" name="relationship_to_user"><br>
+
+  <button type="submit" name="action" value="add_more">Add Another</button>
+  <button type="submit" name="action" value="next">Next</button>
+</form>
+

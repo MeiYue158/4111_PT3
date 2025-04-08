@@ -1,0 +1,228 @@
+"""
+Columbia's COMS W4111.001 Introduction to Databases
+Example Webserver
+To run locally:
+    python server.py
+Go to http://localhost:8111 in your browser.
+A debugger such as "pdb" may be helpful for debugging.
+Read about it online.
+"""
+import os
+from sqlalchemy import *
+from sqlalchemy.pool import NullPool
+from flask import Flask, request, render_template, g, redirect, Response, session
+import re
+
+tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
+app = Flask(__name__, template_folder=tmpl_dir)
+app.secret_key = 'aSDF2134!@#supersecretkey'
+
+DATABASE_USERNAME = ""
+DATABASE_PASSWRD = ""
+DATABASE_HOST = "34.148.223.31"
+DATABASEURI = "postgresql://my2903:770042@34.148.223.31/proj1part2"
+
+engine = create_engine(DATABASEURI)
+
+@app.before_request
+def before_request():
+    try:
+        g.conn = engine.connect()
+    except:
+        print("uh oh, problem connecting to database")
+        import traceback; traceback.print_exc()
+        g.conn = None
+
+@app.teardown_request
+def teardown_request(exception):
+    try:
+        g.conn.close()
+    except Exception as e:
+        pass
+
+@app.route('/')
+def index():
+    print(request.args)
+    select_query = "SELECT name from test"
+    cursor = g.conn.execute(text(select_query))
+    names = [result[0] for result in cursor]
+    cursor.close()
+    context = dict(data=names)
+    return render_template("index.html", **context)
+
+@app.route('/another')
+def another():
+    return render_template("another.html")
+
+@app.route('/add', methods=['POST'])
+def add():
+    name = request.form['name']
+    params = {"new_name": name}
+    g.conn.execute(text('INSERT INTO test(name) VALUES (:new_name)'), params)
+    g.conn.commit()
+    return redirect('/')
+
+@app.route('/login')
+def login():
+    abort(401)
+
+@app.route('/create_user', methods=['GET', 'POST'])
+def create_user():
+    if request.method == 'GET':
+        form_data = session.get('form_data', {})  
+        return render_template('create_user.html', **form_data)
+    elif request.method == 'POST':
+        country = request.form['country']
+        city_name = request.form['city_name']
+        email = request.form['email']
+
+        email_regex = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+        if not re.match(email_regex, email):
+            return "Invalid email format. Please go back and enter a valid email.", 400
+
+        existing_user = g.conn.execute(text("""
+            SELECT 1 FROM Users WHERE email = :email
+        """), {'email': email}).fetchone()
+        if existing_user:
+            return "This email is already registered. Please use another one.", 400
+
+        result = g.conn.execute(text("""
+            SELECT city_id FROM City
+            WHERE country ILIKE :country AND city_name ILIKE :city_name
+        """), {'country': country, 'city_name': city_name})
+        city_row = result.fetchone()
+        if city_row is None:
+            return "City not found", 400
+        city_id = city_row[0]
+
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        dob = request.form['date_of_birth']
+        gender = request.form['gender']
+        preferred_travel_type = request.form.get('preferred_travel_type', '')
+        occupation = request.form.get('occupation', '')
+        income = request.form.get('income', '')
+
+        session['form_data'] = {
+            'country': country,
+            'city_name': city_name,
+            'email': email,
+            'first_name': first_name,
+            'last_name': last_name,
+            'date_of_birth': dob,
+            'gender': gender,
+            'preferred_travel_type': preferred_travel_type,
+            'occupation': occupation,
+            'income': income
+        }
+
+        params = {
+            "city_id": city_id,
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "date_of_birth": dob,
+            "gender": gender,
+            "preferred_travel_type": preferred_travel_type,
+            "occupation": occupation,
+            "income": income
+        }
+
+        try:
+            result = g.conn.execute(text("""
+                INSERT INTO Users (city_id, email, first_name, last_name, date_of_birth, gender, preferred_travel_type, occupation, income)
+                VALUES (:city_id, :email, :first_name, :last_name, :date_of_birth, :gender, :preferred_travel_type, :occupation, :income)
+                RETURNING user_id
+            """), params)
+            user_id = result.fetchone()[0]
+            session['user_id'] = user_id
+            g.conn.commit()
+            return redirect('/create_trip')
+        except Exception as e:
+            g.conn.rollback()
+            return f"Error: {str(e)}", 400
+
+    return render_template('create_user.html')
+
+@app.route('/create_trip', methods=['GET', 'POST'])
+def create_trip():
+    if request.method == 'POST':
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect('/create_user')
+
+        result = g.conn.execute(text("""
+            SELECT city_id FROM Users WHERE user_id = :user_id
+        """), {'user_id': user_id})
+        row = result.fetchone()
+        if row is None:
+            return "User city not found.", 400
+        origin = row[0]
+
+        begin_date = request.form['begin_date']
+        end_date = request.form['end_date']
+        num_adults = request.form['num_adults']
+        num_children = request.form['num_children']
+
+        params = {
+            'begin_date': begin_date,
+            'end_date': end_date,
+            'origin': origin,
+            'num_adults': num_adults,
+            'num_children': num_children
+        }
+
+        result = g.conn.execute(text("""
+            INSERT INTO Trip (begin_date, end_date, origin, num_adults, num_children)
+            VALUES (:begin_date, :end_date, :origin, :num_adults, :num_children)
+            RETURNING trip_id
+        """), params)
+        trip_id = result.fetchone()[0]
+
+        g.conn.execute(text("""
+            INSERT INTO User_Trip (user_id, trip_id)
+            VALUES (:user_id, :trip_id)
+        """), {'user_id': user_id, 'trip_id': trip_id})
+
+        session['trip_id'] = trip_id
+        g.conn.commit()
+        return redirect('/trip_details')
+
+    return render_template('create_trip.html')
+
+@app.route('/trip_details', methods=['GET', 'POST'])
+def trip_details():
+    trip_id = session.get('trip_id')
+    if not trip_id:
+        return redirect('/create_trip')
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        # ... your INSERT logic for hotel, restaurant, park, experience, ticket, transportation ...
+
+        g.conn.commit()
+
+        if action == 'save':
+            return "Saved! You can come back later."
+        elif action == 'submit':
+            session.pop('user_id', None)
+            session.pop('trip_id', None)
+            return render_template('submission_success.html')
+
+    return render_template('trip_details.html')
+
+if __name__ == "__main__":
+    import click
+
+    @click.command()
+    @click.option('--debug', is_flag=True)
+    @click.option('--threaded', is_flag=True)
+    @click.argument('HOST', default='0.0.0.0')
+    @click.argument('PORT', default=8111, type=int)
+    def run(debug, threaded, host, port):
+        HOST, PORT = host, port
+        print("running on %s:%d" % (HOST, PORT))
+        app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
+
+    run()
