@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Other Users' Trips</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 2em;
+    }
+    th, td {
+      border: 1px solid #999;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    h1 {
+      margin-top: 1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌍 Other Users' Disneyland Trips</h1>
+
+  <h3>💰 Filter by Total Cost Group</h3>
+  <button onclick="showGroup(1)">Group 1: Lowest</button>
+  <button onclick="showGroup(2)">Group 2</button>
+  <button onclick="showGroup(3)">Group 3</button>
+  <button onclick="showGroup(4)">Group 4: Highest</button>
+
+  {% for group_num in [1, 2, 3, 4] %}
+<div id="group{{ group_num }}" style="display: none;">
+  <h3>Group {{ group_num }} Users</h3>
+  <table>
+    <tr>
+      <th>User ID</th>
+      <th>Country</th>
+      <th>City</th>
+      <th>Trip Start</th>
+      <th>Trip End</th>
+      <th>🙎 Adults</th>
+      <th>👶 Children</th>
+      <th>🏨 Hotel ($)</th>
+      <th>🍽️ Dining ($)</th>
+      <th>🎟️ Ticket ($)</th>
+      <th>🎢 Experience ($)</th>
+      <th>🚌 Transport ($)</th>
+      <th>💰 Total Cost ($)</th>
+    </tr>
+    {% for trip in grouped_users[group_num] %}
+    <tr>
+      <td>{{ trip.user_id }}</td>
+      <td>{{ trip.country }}</td>
+      <td>{{ trip.city_name }}</td>
+      <td>{{ trip.begin_date }}</td>
+      <td>{{ trip.end_date }}</td>
+      <td>{{ party_map[trip.trip_id]["adults"] if trip.trip_id in party_map else 0 }}</td>
+      <td>{{ party_map[trip.trip_id]["children"] if trip.trip_id in party_map else 0 }}</td>
+      <td>{{ hotel_cost_map[trip.trip_id] | default(0) }}</td>
+      <td>{{ dcost_map[trip.trip_id] | default(0) }}</td>
+      <td>{{ ticket_map[trip.trip_id] | default(0) }}</td>
+      <td>{{ exp_map[trip.trip_id] | default(0) }}</td>
+      <td>{{ trans_map[trip.trip_id] | default(0) }}</td>
+      <td>
+        {% if total_cost_map[trip.trip_id] is defined %}
+          {{ total_cost_map[trip.trip_id] | round(2) }}
+        {% else %}
+          N/A
+        {% endif %}
+      </td>      
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endfor %}
+
+<script>
+  function showGroup(groupNum) {
+    for (let i = 1; i <= 4; i++) {
+      document.getElementById("group" + i).style.display = "none";
+    }
+    document.getElementById("group" + groupNum).style.display = "block";
+  }
+</script>
+</body>
+
+  <a href="/create_user">
+    <button>🏠 Back to Home</button>
+  </a>
+</body>
+</html>
+
+
+

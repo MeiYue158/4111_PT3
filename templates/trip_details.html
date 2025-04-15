@@ -4,6 +4,8 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
+    max-width: 100%;
+    width: 100%;
   }
   .form-section {
     padding: 1rem;
@@ -13,190 +15,308 @@
 </style>
 
 <form method="POST" class="form-container">
-  <div class="form-section">
-    <!-- Party Members -->
-    <h2 style="color: #c2185b;">👨‍👩‍👧‍👦 Party Members</h2>
-    Nickname: <input type="text" name="nickname" required><br>
-    Age at Travel: <input type="number" name="age_at_travel" min="0" required><br>
-    Gender: 
-    <select name="gender" required>
-      <option value="">--Select--</option>
-      <option value="male">male</option>
-      <option value="female">female</option>
-      <option value="non-binary">non-binary</option>
-      <option value="other">other</option>
-      <option value="prefer not to say">prefer not to say</option>
-    </select><br>
-    Relationship to User: <input type="text" name="relationship_to_user" required><br>
+
+   <!-- Party Members -->
+    <div class="form-section">
+      <h2 style="color: #c2185b;">👨‍👩‍👧‍👦 Party Members</h2>
+      <div id="party-members-container">
+        <div class="party-member-entry">
+          Nickname: <input type="text" name="nickname"><br>
+          Age at Travel: <input type="number" name="age_at_travel" min="0"><br>
+          Gender:
+          <select name="gender">
+            <option value="">--Select--</option>
+            <option value="male">male</option>
+            <option value="female">female</option>
+            <option value="non-binary">non-binary</option>
+            <option value="other">other</option>
+            <option value="prefer not to say">prefer not to say</option>
+          </select><br>
+          Relationship to User: <input type="text" name="relationship_to_user"><br>
+          <button type="button" onclick="deletePartyMember(this)">🗑️ Delete</button>
+        <div>
+      </div>      
+      <button type="button" onclick="addPartyMember()">+ Add Another Party Member</button>
+    </div>
 
     <!-- Hotel Section -->
+    <div class="form-section">
     <h2 style="color: #ff9800;">🏨 Hotel Accommodation</h2>
-    <label for="hotel_name"><strong>Hotel Name:</strong></label>
-    <select name="hotel_name" required>
-      <optgroup label="🏨 Value">
-        <option value="All-Star Sports">All-Star Sports</option>
-        <option value="All-Star Movies">All-Star Movies</option>
-        <option value="All-Star Music">All-Star Music</option>
-        <option value="Pop Century">Pop Century</option>
-        <option value="Art of Animation">Art of Animation</option>
-      </optgroup>
-      <optgroup label="🌟 Moderate">
-        <option value="French Quarter">French Quarter</option>
-        <option value="Riverside">Riverside</option>
-        <option value="Coronado Springs">Coronado Springs</option>
-        <option value="Caribbean Beach">Caribbean Beach</option>
-      </optgroup>
-      <optgroup label="✨ Deluxe">
-        <option value="Beach Club">Beach Club</option>
-        <option value="Yacht Club">Yacht Club</option>
-        <option value="Boardwalk">Boardwalk</option>
-        <option value="Contemporary">Contemporary</option>
-        <option value="Polynesian">Polynesian</option>
-        <option value="Grand Floridian">Grand Floridian</option>
-        <option value="Animal Kingdom Lodge">Animal Kingdom Lodge</option>
-        <option value="Wilderness Lodge">Wilderness Lodge</option>
-      </optgroup>
-      <optgroup label="🏰 Villa">
-        <option value="Beach Club Villas">Beach Club Villas</option>
-        <option value="Boardwalk Villas">Boardwalk Villas</option>
-        <option value="Bay Lake Tower (Contemporary)">Bay Lake Tower (Contemporary)</option>
-        <option value="Polynesian Villas">Polynesian Villas</option>
-        <option value="Grand Floridian Villas">Grand Floridian Villas</option>
-        <option value="Jambo House (Animal Kingdom)">Jambo House (Animal Kingdom)</option>
-        <option value="Kidani Village (Animal Kingdom)">Kidani Village (Animal Kingdom)</option>
-        <option value="Copper Creek (Wilderness Lodge)">Copper Creek (Wilderness Lodge)</option>
-        <option value="Boulder Ridge (Wilderness Lodge)">Boulder Ridge (Wilderness Lodge)</option>
-        <option value="Riviera">Riviera</option>
-        <option value="Saratoga Springs">Saratoga Springs</option>
-        <option value="Old Key West">Old Key West</option>
-      </optgroup>
-      <optgroup label="🏕️ Campground">
-        <option value="Fort Wilderness">Fort Wilderness</option>
-      </optgroup>
-      <option value="Other">Other</option>
-    </select><br>
-
-
-    Hotel Type: 
-    <select name="hotel_type" required>
-      <option value="">--Select--</option>
-      <option value="Hotel">Hotel</option>
-      <option value="Hostel">Hostel</option>
-      <option value="Resort">Resort</option>
-    </select><br>
+    <div id="hotel-container">
+      <div class="hotel-entry">
+        <label for="hotel_name"><strong>Hotel Name:</strong></label>
+        <select name="hotel_name">
+          <optgroup label="🏨 Value">
+            <option value="All-Star Sports">All-Star Sports</option>
+            <option value="All-Star Movies">All-Star Movies</option>
+            <option value="All-Star Music">All-Star Music</option>
+            <option value="Pop Century">Pop Century</option>
+            <option value="Art of Animation">Art of Animation</option>
+          </optgroup>
+          <optgroup label="🌟 Moderate">
+            <option value="French Quarter">French Quarter</option>
+            <option value="Riverside">Riverside</option>
+            <option value="Coronado Springs">Coronado Springs</option>
+            <option value="Caribbean Beach">Caribbean Beach</option>
+          </optgroup>
+          <optgroup label="✨ Deluxe">
+            <option value="Beach Club">Beach Club</option>
+            <option value="Yacht Club">Yacht Club</option>
+            <option value="Boardwalk">Boardwalk</option>
+            <option value="Contemporary">Contemporary</option>
+            <option value="Polynesian">Polynesian</option>
+            <option value="Grand Floridian">Grand Floridian</option>
+            <option value="Animal Kingdom Lodge">Animal Kingdom Lodge</option>
+            <option value="Wilderness Lodge">Wilderness Lodge</option>
+          </optgroup>
+          <optgroup label="🏰 Villa">
+            <option value="Beach Club Villas">Beach Club Villas</option>
+            <option value="Boardwalk Villas">Boardwalk Villas</option>
+            <option value="Bay Lake Tower (Contemporary)">Bay Lake Tower (Contemporary)</option>
+            <option value="Polynesian Villas">Polynesian Villas</option>
+            <option value="Grand Floridian Villas">Grand Floridian Villas</option>
+            <option value="Jambo House (Animal Kingdom)">Jambo House (Animal Kingdom)</option>
+            <option value="Kidani Village (Animal Kingdom)">Kidani Village (Animal Kingdom)</option>
+            <option value="Copper Creek (Wilderness Lodge)">Copper Creek (Wilderness Lodge)</option>
+            <option value="Boulder Ridge (Wilderness Lodge)">Boulder Ridge (Wilderness Lodge)</option>
+            <option value="Riviera">Riviera</option>
+            <option value="Saratoga Springs">Saratoga Springs</option>
+            <option value="Old Key West">Old Key West</option>
+          </optgroup>
+          <optgroup label="🏕️ Campground">
+            <option value="Fort Wilderness">Fort Wilderness</option>
+          </optgroup>
+          <option value="Other">Other</option>
+        </select><br>
     
-    Room Type:
-    <select name="room_type" required>
-      <option value="">--Select--</option>
-      <option value="Single">Single</option>
-      <option value="Double">Double</option>
-      <option value="Twin">Twin</option>
-      <option value="Queen">Queen</option>
-      <option value="King">King</option>
-      <option value="Suite">Suite</option>
-      <option value="Studio">Studio</option>
-      <option value="Family Room">Family Room</option>
-      <option value="Connecting Rooms">Connecting Rooms</option>
-      <option value="Accessible Room">Accessible Room</option>
-    </select><br>
+        Hotel Type:
+        <select name="hotel_type">
+          <option value="">--Select--</option>
+          <option value="Hotel">Hotel</option>
+          <option value="Hostel">Hostel</option>
+          <option value="Resort">Resort</option>
+        </select><br>
+    
+        Room Type:
+        <select name="room_type">
+          <option value="">--Select--</option>
+          <option value="Single">Single</option>
+          <option value="Double">Double</option>
+          <option value="Twin">Twin</option>
+          <option value="Queen">Queen</option>
+          <option value="King">King</option>
+          <option value="Suite">Suite</option>
+          <option value="Studio">Studio</option>
+          <option value="Family Room">Family Room</option>
+          <option value="Connecting Rooms">Connecting Rooms</option>
+          <option value="Accessible Room">Accessible Room</option>
+        </select><br>
+    
+        Nights Stayed: <input type="number" name="nights_stayed" min="0"><br>
+        Hotel Cost: <input type="number" name="hotel_cost" step="0.01" min="0"><br>
+    
+        <button type="button" onclick="removeHotel(this)">🗑️ Remove</button>
+        <hr>
+      </div>
+    </div>
 
-    Nights Stayed: <input type="number" name="nights_stayed" min="0" required><br>
-    Hotel Cost: <input type="number" name="hotel_cost" step="0.01" min="0" required><br>
+    <!-- Add button -->
+    <button type="button" onclick="addHotel()">+ Add Another Hotel Stay</button>
+    </div>
 
+    
+          
     <!-- Restaurant Section -->
+    <div class="form-section">
     <h2 style="color: #4caf50;">🍽️ Dining Experience</h2>
-    Restaurant Name: <input type="text" name="restaurant_name" required><br>
-    Meal Type: 
-    <select name="meal_type" required>
-      <option value="">--Select--</option>
-      <option value="Quick Service">Quick Service</option>
-      <option value="Table Service">Table Service</option>
-      <option value="Buffet">Buffet</option>
-    </select><br>
+    <div id="dining-container">
+      <div class="dining-block">
+        Restaurant Name: <input type="text" name="restaurant_name" required><br>
+        Meal Type:
+        <select name="meal_type" required>
+          <option value="">--Select--</option>
+          <option value="Quick Service">Quick Service</option>
+          <option value="Table Service">Table Service</option>
+          <option value="Buffet">Buffet</option>
+        </select><br>
     
-    <label for="restaurant_park_id">Park:</label>
-    <select name="restaurant_park_id" required>
-      <option value="">--Select--</option>
-      <option value="1">Magic Kingdom</option>
-      <option value="2">EPCOT</option>
-      <option value="3">Animal Kingdom</option>
-      <option value="4">Hollywood Studios</option>
-    </select><br>
-
-    Meal Time: 
-    <select name="meal_time" required>
-      <option value="">--Select--</option>
-      <option value="Breakfast">Breakfast</option>
-      <option value="Lunch">Lunch</option>
-      <option value="Dinner">Dinner</option>
-    </select><br>
-    Meal Cost: <input type="number" name="meal_cost" step="0.01" min="0" required><br>
+        Park:
+        <select name="restaurant_park_id" required>
+          <option value="">--Select--</option>
+          <option value="1">Magic Kingdom</option>
+          <option value="2">EPCOT</option>
+          <option value="3">Animal Kingdom</option>
+          <option value="4">Hollywood Studios</option>
+        </select><br>
+    
+        Meal Time:
+        <select name="meal_time" required>
+          <option value="">--Select--</option>
+          <option value="Breakfast">Breakfast</option>
+          <option value="Lunch">Lunch</option>
+          <option value="Dinner">Dinner</option>
+        </select><br>
+    
+        Meal Cost: <input type="number" name="meal_cost" step="0.01" min="0" required><br>
+        <button type="button" onclick="removeDiningBlock(this)">🗑️ Remove</button>
+        <hr>
+      </div>
+    </div>
+    
+    <!-- Add button -->
+    <button type="button" onclick="addDiningBlock()">+ Add Another Dining Experience</button>
   </div>
 
-  <div class="form-section">
     <!-- Visited Parks Section -->
+  <div class="form-section">
     <h2 style="color: #2d9cdb;">🎢 Visited Parks</h2>
     <label>Select Parks You Visited:</label><br>
     <input type="checkbox" name="parks" value="1" required> Magic Kingdom<br>
     <input type="checkbox" name="parks" value="2"> EPCOT<br>
     <input type="checkbox" name="parks" value="3"> Animal Kingdom<br>
     <input type="checkbox" name="parks" value="4"> Hollywood Studios<br><br>
+  </div>
 
     <!-- 🌟 Experience Section -->
+    <div class="form-section">
     <h2 style="color: #8E44AD;">🎡 Experiences</h2>
     <div id="experience-container">
       <div class="experience-block">
-        Name: <input type="text" name="experience_name" required><br>
-        Category:
-        <select name="experience_category" required>
-          <option value="">--Select--</option>
-          <option value="Photo">Photo</option>
-          <option value="Makeup">Makeup</option>
-          <option value="Show">Show</option>
-          <option value="Event">Event</option>
-          <option value="VIP Tour">VIP Tour</option>
-          <option value="Ride">Ride</option>
-        </select><br>
-        Park:
-        <select name="experience_park_id" required>
-            <option value="">--Select Park--</option>
-            <option value="1">Magic Kingdom</option>
-            <option value="2">EPCOT</option>
-            <option value="3">Animal Kingdom</option>
-            <option value="4">Hollywood Studios</option>
-        </select><br>
+      Name: <input type="text" name="experience_name" required><br>
+      Category:
+      <select name="experience_category" required>
+        <option value="">--Select--</option>
+        <option value="Photo">Photo</option>
+        <option value="Makeup">Makeup</option>
+        <option value="Show">Show</option>
+        <option value="Event">Event</option>
+        <option value="VIP Tour">VIP Tour</option>
+        <option value="Ride">Ride</option>
+      </select><br>
 
-        Purchase Time: <input type="datetime-local" name="purchase_time" required><br>
-        Payment Method:
-        <select name="payment_method" required>
-          <option value="">--Select--</option>
-          <option value="Credit Card">Credit Card</option>
-          <option value="Cash">Cash</option>
-          <option value="Online Payment">Online Payment</option>
-          <option value="Gift Card">Gift Card</option>
-        </select><br>
-        <label>Cost: <input type="number" name="experience_cost" step="0.01" min="0" required></label><br>
+      Park:
+      <select name="experience_park_id" required>
+        <option value="">--Select Park--</option>
+        <option value="1">Magic Kingdom</option>
+        <option value="2">EPCOT</option>
+        <option value="3">Animal Kingdom</option>
+        <option value="4">Hollywood Studios</option>
+      </select><br>
+      
+
+      Purchase Time: <input type="datetime-local" name="purchase_time" required><br>
+      Payment Method:
+      <select name="payment_method" required>
+        <option value="">--Select--</option>
+        <option value="Credit Card">Credit Card</option>
+        <option value="Cash">Cash</option>
+        <option value="Online Payment">Online Payment</option>
+        <option value="Gift Card">Gift Card</option>
+      </select><br>
+      Cost: <input type="number" name="experience_cost" step="0.01" min="0" required><br>
+
+      <button type="button" onclick="removeExperience(this)">🗑️ Remove</button>
       </div>
+      <hr>
     </div>
+  </div>
 
-    <!-- 🎟️ Ticket Section -->
-    <h2 style="color: #2C3E50;">🎟️ Ticket Cost</h2>
-    Cost: <input type="number" name="ticket_cost" step="0.01" min="0" required><br>
-    Purchase Time: <input type="datetime-local" name="ticket_time" required><br>
 
-    <!-- Transportation -->
-    <h2 style="color: #009688;">🚌 Transportation</h2>
-    Transportation Cost: <input type="number" name="transportation_cost" step="0.01" min="0" required><br>
+  <!-- Add button -->
+  <button type="button" onclick="addExperience()">+ Add Another Experience</button>
 
-    <!-- Save or Submit the entire form -->
-    <div style="margin-top: 20px;">
-      <button type="submit" name="action" value="save">💾 Save</button>
-      <button type="submit" name="action" value="submit">✅ Submit All Trip Details</button>
+
+<!-- 🎟️ Ticket Cost -->
+<div class="form-section">
+  <h2 style="color: #2C3E50;">🎟️ Ticket Cost</h2>
+  <div id="ticket-container">
+    <div class="ticket-entry">
+      Cost: <input type="number" name="ticket_cost" step="0.01" min="0" required><br>
+      Purchase Time: <input type="datetime-local" name="ticket_time" required><br>
+      <button type="button" onclick="removeTicket(this)">🗑️ Remove</button>
+      <hr>
     </div>
+  </div>
+  <button type="button" onclick="addTicket()">+ Add Another Ticket Cost</button>
+</div>
+
+<!-- Transportation -->
+<h2 style="color: #009688;">🚌 Transportation</h2>
+Transportation Total Cost: <input type="number" name="transportation_cost" step="0.01" min="0" required><br>
+
+<!-- Save or Submit the entire form -->
+<div style="margin-top: 20px;">
+  <button type="submit" name="action" value="save">💾 Save</button>
+  <button type="submit" name="action" value="submit">✅ Submit All Trip Details</button>
+</div>
 </form>
 
 <!-- Return to previous Trip page -->
 <form method="GET" action="/create_trip" style="margin-bottom: 1em;">
     <button type="submit">⬅️ Back to Trip Info</button>
 </form>
+  
+<!--Add JS script logic-->>
+<script>
+  function addEntry(containerId, entryClass) {
+    const container = document.getElementById(containerId);
+    const original = container.querySelector('.' + entryClass);
+    const clone = original.cloneNode(true);
+    clone.querySelectorAll("input").forEach(input => input.value = "");
+    clone.querySelectorAll("select").forEach(select => select.selectedIndex = 0);
+    container.appendChild(clone);
+  }
+
+  function removeEntry(button, containerId) {
+    const container = document.getElementById(containerId);
+    const entry = button.parentElement;
+    if (container.children.length > 1) {
+      container.removeChild(entry);
+    } else {
+      alert("At least one entry is required.");
+    }
+  }
+
+  function addPartyMember() {
+    addEntry("party-members-container", "party-member-entry");
+  }
+
+  function deletePartyMember(button) {
+    removeEntry(button, "party-members-container");
+  }
+
+  function addHotel() {
+    addEntry("hotel-container", "hotel-entry");
+  }
+
+  function removeHotel(button) {
+    removeEntry(button, "hotel-container");
+  }
+
+  function addDiningBlock() {
+    addEntry("dining-container", "dining-block");
+  }
+
+  function removeDiningBlock(button) {
+    removeEntry(button, "dining-container");
+  }
+
+  function addExperience() {
+    addEntry("experience-container", "experience-block");
+  }
+
+  function removeExperience(button) {
+    removeEntry(button, "experience-container");
+  }
+
+  function addTicket() {
+    addEntry("ticket-container", "ticket-entry");
+  }
+
+  function removeTicket(button) {
+    removeEntry(button, "ticket-container");
+  }
+</script>
+
+  
   

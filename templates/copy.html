@@ -1,3 +1,4 @@
+
 """
 Columbia's COMS W4111.001 Introduction to Databases
 Example Webserver
@@ -163,6 +164,14 @@ def create_trip():
         end_date = request.form['end_date']
         num_adults = request.form['num_adults']
         num_children = request.form['num_children']
+        
+        session['trip_form_data'] = {
+            'begin_date': begin_date,
+            'end_date': end_date,
+            'num_adults': num_adults,
+            'num_children': num_children
+        }
+
 
         params = {
             'begin_date': begin_date,
@@ -188,18 +197,79 @@ def create_trip():
         g.conn.commit()
         return redirect('/trip_details')
 
-    return render_template('create_trip.html')
+    form_data = session.get('trip_form_data', {})
+    return render_template('create_trip.html', **form_data)
+
 
 @app.route('/trip_details', methods=['GET', 'POST'])
 def trip_details():
     trip_id = session.get('trip_id')
-    if not trip_id:
-        return redirect('/create_trip')
+    user_id = session.get('user_id')  
+
+    if not trip_id or not user_id:
+        return "Missing trip or user info in session", 400
 
     if request.method == 'POST':
         action = request.form.get('action')
 
-        # ... your INSERT logic for hotel, restaurant, park, experience, ticket, transportation ...
+        # insert Party Members
+        nicknames = request.form.getlist('nickname')
+        ages = request.form.getlist('age_at_travel')
+        genders = request.form.getlist('gender')
+        relations = request.form.getlist('relationship_to_user')
+
+        for nickname, age, gender, relation in zip(nicknames, ages, genders, relations):
+            if not gender:  # 防止违反 NOT NULL constraint
+                continue  # 或 return 错误提示
+            g.conn.execute(text("""
+                INSERT INTO Party_Member (user_id, trip_id, nickname, age_at_travel, gender, relationship_to_user)
+                VALUES (:user_id, :trip_id, :nickname, :age, :gender, :relation)
+            """), {
+                'user_id': user_id,
+                'trip_id': trip_id,
+                'nickname': nickname,
+                'age': age if age else None,
+                'gender': gender,
+                'relation': relation
+            })
+
+        # Get Experience fields
+        exp_names = request.form.getlist('experience_name')
+        exp_cats = request.form.getlist('experience_category')
+        exp_park_ids = request.form.getlist('experience_park_id')
+        exp_times = request.form.getlist('purchase_time')
+        pay_methods = request.form.getlist('payment_method')
+        exp_costs = request.form.getlist('experience_cost')  # <- ✅ ADD HERE
+
+        for name, cat, park_id, time, method, cost in zip(exp_names, exp_cats, exp_park_ids, exp_times, pay_methods, exp_costs):
+            result = g.conn.execute(text("""
+                INSERT INTO Experience (name, category, park_id)
+                VALUES (:name, :cat, :park_id)
+                ON CONFLICT (name, park_id) DO NOTHING
+                RETURNING experience_id
+            """), {'name': name, 'cat': cat, 'park_id': park_id})
+
+            experience_id = result.fetchone()
+            if not experience_id:
+                experience_id = g.conn.execute(text("""
+                    SELECT experience_id FROM Experience
+                    WHERE name = :name AND park_id = :park_id
+                """), {'name': name, 'park_id': park_id}).fetchone()
+
+            experience_id = experience_id[0]
+
+            g.conn.execute(text("""
+                INSERT INTO Has_Experience (trip_id, experience_id, park_id, purchase_time, payment_method, cost)
+                VALUES (:trip_id, :experience_id, :park_id, :time, :method, :cost)
+                ON CONFLICT DO NOTHING
+            """), {
+                'trip_id': trip_id,
+                'experience_id': experience_id,
+                'park_id': park_id,
+                'time': time,
+                'method': method,
+                'cost': cost
+            })
 
         g.conn.commit()
 
